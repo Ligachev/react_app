@@ -104,7 +104,7 @@ export function DictPage() {
     const handleClose = () => {
         setIsOpen(false);
     };
-    console.log('search', search);
+
     return (
         <div className={classes.root}>
             <Breadcrumbs maxItems={2} aria-label="breadcrumb">
