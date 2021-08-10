@@ -5,7 +5,6 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
-import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -19,6 +18,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {AppStore} from "../../index";
 import {Book} from '../../redux/reducer';
 import {del_book_action, search_book_action} from "../../redux/action";
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import {AddModal} from "./AddModal";
 import Input from '@material-ui/core/Input';
 import InputAdornment from '@material-ui/core/InputAdornment';
@@ -78,23 +78,12 @@ const useStyles = makeStyles((theme: Theme) =>
 export function DictPage() {
     const classes = useStyles();
     const books = useSelector((state: AppStore) => state.books);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(100);
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const dispatch = useDispatch();
 
-    const handleChangePage = (event: unknown, newPage: number) => {
-        setPage(newPage);
-    };
-
     const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearch(event.target.value)
-    };
-
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
     };
 
     const handleOpen = () => {
@@ -104,6 +93,7 @@ export function DictPage() {
     const handleClose = () => {
         setIsOpen(false);
     };
+
     return (
         <div className={classes.root}>
             <Breadcrumbs maxItems={2} aria-label="breadcrumb">
@@ -161,42 +151,74 @@ export function DictPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {books.map((book, index) => (
-                                <TableRow
-                                    hover
-                                    key={book.id}
-                                >
-                                    <TableCell>
-                                        <Tooltip title="Delete">
-                                            <IconButton aria-label="delete"
-                                                        onClick={() => dispatch(del_book_action(book.id))}>
-                                                <Delete/>
-                                            </IconButton>
-                                        </Tooltip>
-                                    </TableCell>
-                                    <TableCell component="th" id={index.toString()} scope="row" padding="none">
-                                        {book.name}
-                                    </TableCell>
-                                    <TableCell>{book.author}</TableCell>
-                                    <TableCell>{book.description}</TableCell>
-                                </TableRow>
-                            ))}
+                            <BooksList books={books}/>
                         </TableBody>
                     </Table>
                 </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                    component="div"
-                    count={books.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
             </Paper>
             <AddModal isOpen={isOpen} onClose={handleClose}/>
         </div>
     );
 }
 
+interface BookListItemProps {
+    book: Book;
+    index: string;
+}
+export function BookListItem(props: BookListItemProps): React.ReactElement {
+    const {book, index} = props;
+    const dispatch = useDispatch();
+    return (
+        <TableRow
+            hover
+            key={book.id}
+        >
+            <TableCell>
+                <Tooltip title="Delete">
+                    <IconButton aria-label="delete"
+                                onClick={() => dispatch(del_book_action(book.id))}>
+                        <Delete/>
+                    </IconButton>
+                </Tooltip>
+            </TableCell>
+            <TableCell component="th" id={index} scope="row" padding="none">
+                {book.name}
+            </TableCell>
+            <TableCell>{book.author}</TableCell>
+            <TableCell>{book.description}</TableCell>
+        </TableRow>
+    );
+}
 
+
+type BooksListProps = {
+    books: Book[];
+}
+
+export function BooksList(props: BooksListProps): React.ReactElement {
+    const {books} = props;
+
+    function renderRow(props: ListChildComponentProps) {
+        const book = props.data[props.index];
+        return (
+            <div style={{...props.style, listStyleType: 'none'}}>
+                <BookListItem
+                    book={book}
+                    index={book.id}
+                />
+            </div>
+        );
+    }
+    return (
+        <List
+            className="ui-map-draw-geozone-list"
+            height={850}
+            width={2000}
+            itemCount={books.length}
+            itemSize={50}
+            itemData={books}
+        >
+            {renderRow}
+        </List>
+    );
+}

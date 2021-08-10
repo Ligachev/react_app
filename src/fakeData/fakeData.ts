@@ -8,7 +8,7 @@ export const fakeUser: User = {
 
 export const fakeBooks = (b: Omit<Book, 'id'>[] = books): Book[] => {
     const fakeBooks = [];
-    for (let i = 0, j = 0; i < 100; i++, j++) {
+    for (let i = 0, j = 0; i < 10_000; i++, j++) {
         if (j === 100) {
             j = 0;
         }
